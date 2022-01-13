@@ -8,6 +8,7 @@ library(jsonlite)
 library(rvest)
 library(blastula)
 library(lubridate)
+library(glue)
 
 # TODO
 #   Suchbegriffe in den Jobportalen ausprobieren
@@ -19,8 +20,14 @@ library(lubridate)
 
 ## Get open jobs
 # Filter: Germany, Hanover, Human Relations
-# TODO filter "data"
-conti_open <- GET("https://api.continental-jobs.com/search/?data=%7B%22LanguageCode%22%3A%22EN%22%2C%22SearchParameters%22%3A%7B%22FirstItem%22%3A1%2C%22CountItem%22%3A30000%2C%22Sort%22%3A%5B%7B%22Criterion%22%3A%22PositionTitle%22%2C%22Direction%22%3A%22DESC%22%7D%5D%2C%22MatchedObjectDescriptor%22%3A%5B%22ID%22%2C%22PositionTitle%22%2C%22PositionURI%22%2C%22PositionLocation.CountryName%22%2C%22PositionLocation.CityName%22%2C%22JobCategory.Name%22%2C%22PositionLocation.Longitude%22%2C%22PositionLocation.Latitude%22%5D%7D%2C%22SearchCriteria%22%3A%5B%7B%22CriterionName%22%3A%22JobCategory.Code%22%2C%22CriterionValue%22%3A%5B%2211%22%5D%7D%2C%7B%22CriterionName%22%3A%22PositionLocation.Country%22%2C%22CriterionValue%22%3A%5B%2217%22%5D%7D%2C%7B%22CriterionName%22%3A%22PositionLocation.City%22%2C%22CriterionValue%22%3A%5B%22191%22%5D%7D%2C%7B%22CriterionName%22%3A%22PublicationLanguage.Code%22%2C%22CriterionValue%22%3A%5B%22EN%22%5D%7D%2C%7B%22CriterionName%22%3A%22PublicationChannel.Code%22%2C%22CriterionValue%22%3A%5B%2212%22%5D%7D%5D%7D", 
+# TODO filter
+#  data+consultant+analyst+analytics+statistic+automation+analyst+recruiting+hr+diagnostic
+#conti_open <- GET("https://api.continental-jobs.com/search/?data=%7B%22LanguageCode%22%3A%22EN%22%2C%22SearchParameters%22%3A%7B%22FirstItem%22%3A1%2C%22CountItem%22%3A30000%2C%22Sort%22%3A%5B%7B%22Criterion%22%3A%22PositionTitle%22%2C%22Direction%22%3A%22DESC%22%7D%5D%2C%22MatchedObjectDescriptor%22%3A%5B%22ID%22%2C%22PositionTitle%22%2C%22PositionURI%22%2C%22PositionLocation.CountryName%22%2C%22PositionLocation.CityName%22%2C%22JobCategory.Name%22%2C%22PositionLocation.Longitude%22%2C%22PositionLocation.Latitude%22%5D%7D%2C%22SearchCriteria%22%3A%5B%7B%22CriterionName%22%3A%22JobCategory.Code%22%2C%22CriterionValue%22%3A%5B%2211%22%5D%7D%2C%7B%22CriterionName%22%3A%22PositionLocation.Country%22%2C%22CriterionValue%22%3A%5B%2217%22%5D%7D%2C%7B%22CriterionName%22%3A%22PositionLocation.City%22%2C%22CriterionValue%22%3A%5B%22191%22%5D%7D%2C%7B%22CriterionName%22%3A%22PublicationLanguage.Code%22%2C%22CriterionValue%22%3A%5B%22EN%22%5D%7D%2C%7B%22CriterionName%22%3A%22PublicationChannel.Code%22%2C%22CriterionValue%22%3A%5B%2212%22%5D%7D%5D%7D", 
+#                  verbose())
+
+conti_open <- GET(paste0("https://api.continental-jobs.com/search/?data=%7B%22LanguageCode%22%3A%22EN%22%2C%22SearchParameters%22%3A%7B%22FirstItem%22%3A1%2C%22CountItem%22%3A100%2C%22Sort%22%3A%5B%7B%22Criterion%22%3A%22PublicationStartDate%22%2C%22Direction%22%3A%22DESC%22%7D%5D%2C%22MatchedObjectDescriptor%22%3A%5B%22ID%22%2C%22PositionID%22%2C%22PositionTitle%22%2C%22PositionURI%22%2C%22PositionLocation.CountryName%22%2C%22PositionLocation.CityName%22%2C%22PositionLocation.Longitude%22%2C%22PositionLocation.Latitude%22%2C%22PositionIndustry.Name%22%2C%22JobCategory.Name%22%2C%22PublicationStartDate%22%2C%22VacancyDivision%22%2C%22JobFlexibility.Code%22%2C%22JobFlexibility.Name%22%2C%22JobFlexibility.Description%22%5D%7D%2C%22SearchCriteria%22%3A%5B%7B%22CriterionName%22%3A%22PositionFormattedDescription.Content%22%2C%22CriterionValue%22%3A%5B%22", 
+                  "data+consultant+analyst+analytics+statistic+automation+analyst+recruiting+hr+diagnostic",
+                  "%22%5D%7D%2C%7B%22CriterionName%22%3A%22LeadershipLevel.Code%22%2C%22CriterionValue%22%3A%5B%221%22%5D%7D%2C%7B%22CriterionName%22%3A%22PositionLocation.City%22%2C%22CriterionValue%22%3A%5B%22191%22%5D%7D%2C%7B%22CriterionName%22%3A%22PublicationLanguage.Code%22%2C%22CriterionValue%22%3A%5B%22EN%22%5D%7D%2C%7B%22CriterionName%22%3A%22PublicationChannel.Code%22%2C%22CriterionValue%22%3A%5B%2212%22%5D%7D%5D%7D"),
                   verbose())
 
 conti_open <- conti_open %>% 
@@ -33,8 +40,9 @@ conti_open <- conti_open$MatchedObjectDescriptor
 
 conti_open <- conti_open %>% 
   tibble() %>% 
-  select(ID, everything(), -c(PositionLocation, JobCategory)) %>% 
-  filter(!str_detect(PositionTitle, c("Werkstud|Praktik|praktiku|Internship"))) %>% 
+  select(PositionID, PositionTitle, PositionURI) %>% 
+  filter(!str_detect(PositionTitle, 
+                     c("Werkstud|Werksstudent|Praktik|praktiku|Internship|Student"))) %>% 
   rename(ID = 1, Title = 2, URI = 3)
 
 ## Compare open jobs with known jobs
@@ -179,6 +187,7 @@ write_csv2(bahn_complete, "data/bahn_temp.csv")
 
 # 4 | Capgemini ----------------------------------------------------------------
 
+' 
 cap_open <-  GET("https://www.capgemini.com/de-de/jobs/?search_term=data&filter_contract_type=unbefristet&filter_location=hannover", 
             verbose())
 
@@ -213,11 +222,12 @@ cap_complete <- cap_hist %>%
 
 # TODO Spalte mit Zeitpunt des ersten Abrufs
 write_csv2(cap_complete, "data/cap_temp.csv")
-
+'
 
 
 # 5 | TUEV NORD ----------------------------------------------------------------
 
+'
 # Region Hannover, (IT-Bereich)
 
 tuv_open <- GET("https://www.tuev-nord-group.com/de/karriere/stellenangebote/",
@@ -255,10 +265,11 @@ tuv_complete <- tuv_hist %>%
 # TODO Spalte mit Zeitpunt des ersten Abrufs
 write_csv2(tuv_complete, "data/tuv_temp.csv")
 
-
+' 
 
 # Max-Planck Institute ---------------------------------------------------------
 
+'
 # https://www.mpg.de/stellenboerse?region%5B%5D=HH&region%5B%5D=NI
 
 # GET("https://www.mpg.de/stellenboerse?job_type%5B%5D=admin&region%5B%5D=BY", 
@@ -273,6 +284,10 @@ GET("https://www.mpg.de/stellenboerse",
 
 application/json
 application/xml
+
+'
+
+
 # Send email for new jobs ------------------------------------------------------
 
 #   Gmail: ds.mailservice.germany
@@ -286,26 +301,31 @@ application/xml
 #   use_ssl = TRUE
 # )
 
-if (nrow(conti_new) > 0) {
-  library(glue)
+send_job_mail <- function() {
+  # library(glue)
   # Create Markdown report
   # TODO vignette("simple_composition")
   
-  t1 <- conti_complete %>% 
+  t1 <- conti_new %>% 
     knitr::kable(format = "html") %>% 
     md() 
   
-  t2 <- hdi_complete %>% 
+  t2 <- hdi_new %>% 
     knitr::kable(format = "html") %>% 
     md() 
   
-  glue(t1, t2) %>% md() %>% compose_email()
-  bahn_complete
-  
-  job_message <- conti_new %>% 
+  t3 <- bahn_new %>% 
     knitr::kable(format = "html") %>% 
+    md() 
+  
+  job_message <- glue(t1, t2, t3) %>% 
     md() %>% 
     compose_email()
+  
+  #job_message <- conti_new %>% 
+  #  knitr::kable(format = "html") %>% 
+  #  md() %>% 
+  #  compose_email()
   
   # Send report with gmail
   tryCatch(
@@ -341,6 +361,14 @@ if (nrow(conti_new) > 0) {
   #   --> "message" hier immer name des objektes, das verwendet wird?
   
 }
+
+# Send if at least one new entry
+ifelse((nrow(conti_new) > 0)|
+         (nrow(hdi_new) > 0)|
+         (nrow(bahn_new) > 0), 
+       send_job_mail(),
+       print("Heute keine neuen Stellen gefunden"))
+
 
 # TODO
 #   z.B. einmal in der Woche zusammenfassung aller derzeit offenen stellen
