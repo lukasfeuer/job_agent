@@ -319,6 +319,39 @@ application/xml
 '
 
 
+
+# ROSSMANN ----------------------------------------------------------------
+
+ross_open <- GET("https://jobs.rossmann.de/?type=1201&tx_oycimport_vacancy[controller]=Vacancy&tx_oycimport_vacancy[action]=search"
+    , verbose())
+
+ross_open |> 
+  content() |> 
+  html_element("body") |> 
+  html_elements("div") 
+
+ross_open |> 
+  content() |> 
+  html_element("body") |> 
+  html_elements(".job-list__item list-item") 
+  
+ross_titles <- ross_open |> 
+  content() |> 
+  html_elements(".job-list__item-title") |> 
+  html_text()
+
+ross_time <- ross_open |> 
+  content() |> 
+  html_elements(".job-list__item-time") |> 
+  html_text()
+
+ross_link <- ross_open |> 
+  content() |> 
+  html_elements(".job-list__item-link") |> 
+  html_attr("href") |> 
+  (\(.) paste0("https://jobs.rossmann.de", .))()
+
+
 # Send email for new jobs ------------------------------------------------------
 
 #   Gmail: ds.mailservice.germany
