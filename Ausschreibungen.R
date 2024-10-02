@@ -13,6 +13,8 @@ library(glue)
 keyWords <- c("Analyst", "Reporting", "Mathematik", "Statistik", "Aktuar"
               , "Risiko", "Risk", "Daten", "Data", "Scientist")
 
+mailing_list <- list()
+
 # 1 | Continental AG -----------------------------------------------------------
 
 ## Get open jobs
@@ -55,6 +57,7 @@ conti_complete <- conti_hist %>%
 # TODO Spalte mit Zeitpunt des ersten Abrufs
 write_csv2(conti_complete, "data/conti_temp.csv")
 
+ifelse(nrow(conti_new) < 0, mailing_list$conti <- conti_new, FALSE)
 
 # 2 | HDI ----------------------------------------------------------------------
 
@@ -88,6 +91,7 @@ hdi_complete <- hdi_hist %>%
 write_csv2(hdi_complete, "data/hdi_temp.csv")
 
 
+ifelse(nrow(hdi_new) < 0, mailing_list$hdi <- hdi_new, FALSE)
 
 
 
@@ -119,10 +123,11 @@ kkh_jobs <- tibble(
 )
 
 
+ifelse(nrow(kkh_new) < 0, mailing_list$kkh <- kkh_new, FALSE)
 
 
 
-
+'
 # 3 | Deutsche Bahn ------------------------------------------------------------
 
 # xml2::html_structure(x)
@@ -213,7 +218,7 @@ bahn_complete <- bahn_hist %>%
 # TODO Spalte mit Zeitpunt des ersten Abrufs
 write_csv2(bahn_complete, "data/bahn_temp.csv")
 
-
+'
 
 
 # 4 | Capgemini ----------------------------------------------------------------
@@ -256,106 +261,155 @@ write_csv2(cap_complete, "data/cap_temp.csv")
 '
 
 
-# 5 | TUEV NORD ----------------------------------------------------------------
-
-'
-# Region Hannover, (IT-Bereich)
-
-tuv_open <- GET("https://www.tuev-nord-group.com/de/karriere/stellenangebote/",
-                verbose())
-
-POST("https://jobs.tuev-nord.de/api/rest/v2/frontend/jobboards/5564_extern/jobs",
-     )
-
-
-GET("https://maps.google.com/maps-api-v3/api/js/47/1/intl/de_ALL/util.js")
-GET("https://www.google.com/recaptcha/api2/bframe?hl=de&v=_7Co1fh8iT2hcjvquYJ_3zSP&k=6LfS60EUAAAAAPCCALpOPHrZyWl6MirRcFrm3GZr")
-
-tuv_open %>% 
-  content(as = "parsed") %>% 
-  write_lines("test.html")
-  
-
-tuv_open <- tuv_open$jobs
-
-tuv_open <- tuv_open %>% 
-  tibble() %>% 
-  select(id, jobTitle, httpLink) %>% 
-  rename(ID = 1, Title = 2, URI = 3)
-
-## Compare open jobs with known jobs
-tuv_hist <- read_csv2("data/tuv_temp.csv")
-
-tuv_new <- tuv_open %>% 
-  anti_join(tuv_hist) %>% 
-  mutate(Erfasst = today())
-
-tuv_complete <- tuv_hist %>% 
-  bind_rows(tuv_new)
-
-# TODO Spalte mit Zeitpunt des ersten Abrufs
-write_csv2(tuv_complete, "data/tuv_temp.csv")
-
-' 
-
-# Max-Planck Institute ---------------------------------------------------------
-
-'
-# https://www.mpg.de/stellenboerse?region%5B%5D=HH&region%5B%5D=NI
-
-# GET("https://www.mpg.de/stellenboerse?job_type%5B%5D=admin&region%5B%5D=BY", 
-# add_headers(Accept = ""))
-
-GET("https://www.mpg.de/stellenboerse?job_type%5B%5D=admin&region%5B%5D=BY",
-    add_headers(Accept = "application/json"))
-
-GET("https://www.mpg.de/stellenboerse",
-    query = list(region = "BY"),
-    verbose())
-
-application/json
-application/xml
-
-'
-
-
 
 # ROSSMANN ----------------------------------------------------------------
 
-ross_open <- GET("https://jobs.rossmann.de/?type=1201&tx_oycimport_vacancy[controller]=Vacancy&tx_oycimport_vacancy[action]=search"
+ross_response <- GET("https://jobs.rossmann.de/?type=1201&tx_oycimport_vacancy[controller]=Vacancy&tx_oycimport_vacancy[action]=search"
     , verbose())
 
-ross_open |> 
-  content() |> 
-  html_element("body") |> 
-  html_elements("div") 
-
-ross_open |> 
-  content() |> 
-  html_element("body") |> 
-  html_elements(".job-list__item list-item") 
+# ross_open |> 
+#   content() |> 
+#   html_element("body") |> 
+#   html_elements("div") 
+# 
+# ross_open |> 
+#   content() |> 
+#   html_element("body") |> 
+#   html_elements(".job-list__item list-item") 
   
-ross_titles <- ross_open |> 
+ross_titles <- ross_response |> 
   content() |> 
   html_elements(".job-list__item-title") |> 
   html_text()
 
-ross_time <- ross_open |> 
+ross_time <- ross_response |> 
   content() |> 
   html_elements(".job-list__item-time") |> 
   html_text()
 
-ross_link <- ross_open |> 
+ross_link <- ross_response |> 
   content() |> 
   html_elements(".job-list__item-link") |> 
   html_attr("href") |> 
   (\(.) paste0("https://jobs.rossmann.de", .))()
 
+ross_open <- tibble(
+  Title = ross_titles
+  , time = ross_time
+  , URI = ross_link
+) |> 
+  filter(
+    time == "Vollzeit"
+    , !str_detect(Title, "Teilzeit")
+    , !str_detect(Title, "Verkäufer")
+    , !str_detect(Title, "Regalplanung")
+    , !str_detect(Title, "Filialleit|Führungs")
+    , !str_detect(Title, "Trainee")
+    , !str_detect(Title, "(L|l)eitung")
+    , !str_detect(Title, "(L|l)eiter")
+    , !str_detect(Title, "Kommissionier")
+    , !str_detect(Title, "Praktikant")
+    , !str_detect(Title, "Studium")
+    , !str_detect(Title, "Ausbildung")
+    , !str_detect(Title, "Mitarbeiter")
+    , !str_detect(Title, "(F|f)ahrer")
+    , !str_detect(Title, "Recht|Java|Controll|(T|t)est|Support|Cloud|Projektman|(A|a)ssisten")
+    , !str_detect(Title, "Product Owner")
+    
+  ) |> 
+  mutate(
+    time = NULL
+    , ID = str_extract(URI, "\\d+(?=\\.html)")
+  ) |> 
+  relocate(ID, .before = Title)
+
+
+ifelse(nrow(ross_new) < 0, mailing_list$ross <- ross_new, FALSE)
+
+
+ross_hist <- read_csv2("data/ross_temp.csv"
+                       , col_types = cols(
+                         ID = col_factor()))
+
+ross_new <- ross_open |> 
+  anti_join(ross_hist) |> 
+  mutate(Erfasst = today())
+
+if (nrow(ross_new) > 0) {
+  hann_complete <- hann_hist |>
+    bind_rows(hann_new)
+  
+  write_csv2(ross_complete, "data/ross_temp.csv")
+}
+
+ifelse(nrow(ross_new) > 0, mailing_list$ross <- ross_new, FALSE)
+
+# Hannover Re -------------------------------------------------------------
+
+# hann_response <- GET("https://jobs.hannover-re.com/search/?createNewAlert=false&q=&optionsFacetsDD_customfield4=&optionsFacetsDD_customfield1=&optionsFacetsDD_country=&optionsFacetsDD_customfield3=") 
+# hann_response |> 
+#   content() |> 
+#   readBin("character") 
+# 
+# hann_response |> 
+#   content() |> 
+#   readBin("character") |>
+#   read_html() |> 
+#   html_elements(".jobTitle-link") |> 
+#   html_attr("href") |> unique()
+
+startrow <- 0
+full_hann_response <- vector("character")
+response_lenght <- 25
+
+while (response_lenght == 25) {
+  hann_response <- GET(paste0("https://jobs.hannover-re.com/tile-search-results/?q=&sortColumn=referencedate&sortDirection=desc&startrow=", startrow)) |> 
+    content() |> 
+    readBin("character") |>
+    read_html() |> 
+    html_elements(".jobTitle-link") |> 
+    html_attr("href") |> 
+    unique()
+  full_hann_response <- c(full_hann_response, hann_response)
+  response_lenght == length(hann_response)
+  startrow <- startrow + 25
+}
+  
+hann_open <- full_hann_response |> 
+  tibble() |> 
+  filter(str_detect(full_hann_response, "^/job/Hannover")) |> 
+  mutate(
+    id = str_extract(full_hann_response, "/\\d+/$")
+    , id = factor(str_remove_all(id, "/"))
+    , title = str_remove_all(full_hann_response, "^/job/Hannover-")
+    , title = str_remove_all(title, "/\\d+/$")
+    , title = str_replace_all(title, "-", " ")
+    , uri = paste0("https://jobs.hannover-re.com", full_hann_response)
+    , full_hann_response = NULL
+  ) 
+
+hann_hist <- read_csv2("data/hann_temp.csv"
+                       , col_types = cols(
+                         id = col_factor()))
+  
+hann_new <- hann_open |> 
+  anti_join(hann_hist) |> 
+  mutate(Erfasst = today())
+
+if (nrow(hann_new) > 0) {
+  hann_complete <- hann_hist |>
+    bind_rows(hann_new)
+  
+  write_csv2(hann_complete, "data/hann_temp.csv")
+}
+
+ifelse(nrow(hann_new) > 0, mailing_list$hann <- hann_new, FALSE)
+
 
 # Send email for new jobs ------------------------------------------------------
 
 #   Gmail: ds.mailservice.germany
-#   PW: Sys.getenv("mailservice_PW")
+#   PW: Sys.getenv("mailservice_PW") # Note: replaced by app password 2024-10-02
 # 
 # create_smtp_creds_file(
 #   file = "gmail_creds",
@@ -368,28 +422,19 @@ ross_link <- ross_open |>
 send_job_mail <- function() {
   # library(glue)
   # Create Markdown report
-  # TODO vignette("simple_composition")
+  # vignette("simple_composition")
   
-  t1 <- conti_new %>% 
-    knitr::kable(format = "html") %>% 
-    md() 
-  
-  t2 <- hdi_new %>% 
-    knitr::kable(format = "html") %>% 
-    md() 
-  
-  t3 <- bahn_new %>% 
-    knitr::kable(format = "html") %>% 
-    md() 
-  
-  job_message <- glue(t1, t2, t3) %>% 
-    md() %>% 
-    compose_email()
-  
-  #job_message <- conti_new %>% 
-  #  knitr::kable(format = "html") %>% 
-  #  md() %>% 
-  #  compose_email()
+  if (length(mailing_list) > 0) {
+    job_message <- mailing_list %>%
+      map(., ~knitr::kable(., format = "html")) %>%
+      map(md) |> 
+      reduce(glue) |> 
+      md() |> 
+      compose_email()
+  } else {
+    job_message <- md("Heute *keine* neuen Stellen gefunden.") |> 
+      compose_email()
+  }
   
   # Send report with gmail
   tryCatch(
@@ -422,17 +467,10 @@ send_job_mail <- function() {
   # 
   # bzw. min. x-mal wiederholen bis:
   #   The email message was sent successfully.
-  #   --> "message" hier immer name des objektes, das verwendet wird?
-  
+
 }
 
-# Send if at least one new entry
-ifelse((nrow(conti_new) > 0)|
-         (nrow(hdi_new) > 0)|
-         (nrow(bahn_new) > 0), 
-       send_job_mail(),
+
+ifelse(length(mailing_list) > 0
+       , send_job_mail(),
        print("Heute keine neuen Stellen gefunden"))
-
-
-# TODO
-#   z.B. einmal in der Woche zusammenfassung aller derzeit offenen stellen
