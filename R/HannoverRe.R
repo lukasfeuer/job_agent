@@ -39,8 +39,7 @@ tryCatch({
       html_attr("href") |> 
       unique()
     full_hann_response <- c(full_hann_response, hann_response)
-    response_lenght == length(hann_response)
-    startrow <- startrow + response_lenght
+    startrow <- startrow + length(hann_response)
     
     hann_response_raw <- GET(paste0("https://jobs.hannover-re.com/tile-search-results/?q=&sortColumn=referencedate&sortDirection=desc&startrow=", startrow)) |> 
       content() |> 
@@ -62,18 +61,18 @@ hann_open <- full_hann_response |>
   tibble() |> 
   filter(str_detect(full_hann_response, "^/job/Hannover")) |> 
   mutate(
-    id = str_extract(full_hann_response, "/\\d+/$")
-    , id = factor(str_remove_all(id, "/"))
-    , title = str_remove_all(full_hann_response, "^/job/Hannover-")
-    , title = str_remove_all(title, "/\\d+/$")
-    , title = str_replace_all(title, "-", " ")
-    , uri = paste0("https://jobs.hannover-re.com", full_hann_response)
+    ID = str_extract(full_hann_response, "/\\d+/$")
+    , ID = factor(str_remove_all(ID, "/"))
+    , Title = str_remove_all(full_hann_response, "^/job/Hannover-")
+    , Title = str_remove_all(Title, "/\\d+/$")
+    , Title = str_replace_all(Title, "-", " ")
+    , URI = paste0("https://jobs.hannover-re.com", full_hann_response)
     , full_hann_response = NULL
   ) 
 
 hann_hist <- read_csv2("data/hann_temp.csv"
                        , col_types = cols(
-                         id = col_factor()))
+                         ID = col_factor()))
 
 hann_new <- hann_open |> 
   anti_join(hann_hist) |> 

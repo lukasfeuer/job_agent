@@ -14,14 +14,14 @@ mailing_list <- list()
 # 1 | HDI -----------------------------------------------------------------
 
 source("R/HDI.R")
-
+hdi_new <- rename(hdi_new, "HDI" = Title)
 ifelse(nrow(hdi_new) > 0, mailing_list$hdi <- hdi_new, FALSE)
 
 
 # 2 | Hannover Re ---------------------------------------------------------
 
 source("R/HannoverRe.R")
-
+hann_new <- rename(hann_new, "Hannover Re" = Title)
 ifelse(nrow(hann_new) > 0, mailing_list$hann <- hann_new, FALSE)
 
 
@@ -35,7 +35,7 @@ ifelse(nrow(hann_new) > 0, mailing_list$hann <- hann_new, FALSE)
 # 4 | ROSSMANN ------------------------------------------------------------
 
 source("R/Rossmann.R")
-
+ross_new <- rename(ross_new, "Rossmann" = Title)
 ifelse(nrow(ross_new) > 0, mailing_list$ross <- ross_new, FALSE)
 
 
@@ -59,8 +59,11 @@ ifelse(nrow(ross_new) > 0, mailing_list$ross <- ross_new, FALSE)
 #   use_ssl = TRUE
 # )
 
-source("R/send_job_mail.R")
-
-ifelse(length(mailing_list) > 0
-       , send_job_mail(),
-       print("Heute keine neuen Stellen gefunden"))
+if (length(mailing_list) > 0) {
+  mailing_list <- map(mailing_list, \(.)select(., -c(ID, Erfasst)))
+  source("R/send_job_mail.R")
+  send_job_mail()
+  message("\nDONE")
+} else {
+  message("No new Jobs found")
+}

@@ -16,7 +16,9 @@ send_job_mail <- function() {
   
   if (length(mailing_list) > 0) {
     job_message <- mailing_list %>%
-      map(., ~knitr::kable(., format = "html")) %>%
+      map(., ~mutate(., URI = kableExtra::cell_spec("Link", "html", link = URI))) %>%
+      map(., ~knitr::kable(., format = "html", escape = FALSE)) %>%
+      map(., ~kableExtra::kable_styling(., font_size = 12, bootstrap_options = c("hover", "condensed"))) %>%
       map(md) |> 
       reduce(glue) |> 
       md() |> 
@@ -32,7 +34,7 @@ send_job_mail <- function() {
       smtp_send(
         from = "ds.mailservice.germany@gmail.com",
         to = "lukas.feuer@gmail.com",
-        subject = "Neue Ausschreibung",
+        subject = "Neue Ausschreibungen",
         credentials = creds_file(file = "gmail_creds")
       )
     ,
@@ -43,7 +45,7 @@ send_job_mail <- function() {
         smtp_send(
           from = "ds.mailservice.germany@gmail.com",
           to = "lukas.feuer@gmail.com",
-          subject = "Neue Ausschreibung",
+          subject = "Neue Ausschreibungen",
           credentials = creds_file(file = "gmail_creds")
         )
     })

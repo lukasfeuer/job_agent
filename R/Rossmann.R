@@ -21,10 +21,10 @@ tryCatch(
   , finally = message("Finished GET")
 )
 
-if (is_empty(ross_response)) {
-  stop("Empty response for jobs.rossmann.de")
-} else {
+if (!is_empty(ross_response) & ross_response$status_code == 200) {
   message("Response not empty, continue processing")
+} else {
+  stop("Empty response for jobs.rossmann.de")
 }
 
 # ross_open |> 
@@ -92,8 +92,8 @@ ross_new <- ross_open |>
   mutate(Erfasst = today())
 
 if (nrow(ross_new) > 0) {
-  hann_complete <- hann_hist |>
-    bind_rows(hann_new)
+  ross_complete <- ross_hist |>
+    bind_rows(ross_new)
   message("New jobs for Rossmann found")
   write_csv2(ross_complete, "data/ross_temp.csv")
   message("New entries saved to Rossmann file")
